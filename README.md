@@ -101,10 +101,10 @@ Hooray, .travis.yml looks valid :)
 ```
 Создание файла `appveyor.yml`
 ```sh
-cat >> .appveyor.yml <<EOF
+% cat >> .appveyor.yml <<EOF
 image: Visual Studio 2019
 EOF
-cat >> .appveyor.yml <<EOF
+% cat >> .appveyor.yml <<EOF
 build_script:
     - cmd: cmake -H. -B_build
     - cmd: cmake --build _build
