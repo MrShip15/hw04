@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.com/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw04)
-[![Build Status](https://travis-ci.org/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw04)
+[![Build Status](https://travis-ci.org/MrShip15/hw04.svg?branch=master)](https://travis-ci.org/MrShip15/hw04)
 ## Homework IV
 
 Вы продолжаете проходить стажировку в "Formatter Inc." (см [подробности](https://github.com/tp-labs/lab03#Homework)).
@@ -7,15 +6,15 @@
 В прошлый раз ваше задание заключалось в настройке автоматизированной системы **CMake**.
 
 Сейчас вам требуется настроить систему непрерывной интеграции для библиотек и приложений, с которыми вы работали в [прошлый раз](https://github.com/tp-labs/lab03#Homework). Настройте сборочные процедуры на различных платформах:
-* используйте [TravisCI](https://travis-ci.com/) для сборки на операционной системе **MacOS** с использованием компиляторов **gcc** и **clang**;
-
+* используйте [TravisCI](https://travis-ci.com/) для сборки на операционной системе **Linux** с использованием компиляторов **gcc** и **clang**;
+*используйте [AppVeyour](https://www.appveyor.com/) для сборки на операционной системе Windows.
 
 Настройка git-репозитория **hw04** для работы
 ```sh
-% git clone https://github.com/Evgengrmit/hw03 projects/hw04
+% git clone https://github.com/MrShip15/hw03 projects/hw04
 % cd projects/hw04
 % git remote remove origin
-% git remote add origin https://github.com/Evgengrmit/hw04
+% git remote add origin https://github.com/MrShip15/hw04
 ```
 Cоздание единого `CMakeLists.txt`, по которому будет осуществляться сборка при помощи **TravisCI**
 ```sh
@@ -93,16 +92,27 @@ addons:
       - cmake-data
 EOF
 
+
 ```
 Проверка `.travis.yml` на ошибки
 ```sh
 % travis lint
 Hooray, .travis.yml looks valid :)
 ```
-Вставка значков с Build Status для `travis-ci.com` и `travis-ci.org`
+Создание файла `appveyor.yml`
 ```sh
-% ex -sc '1i|[![Build Status](https://travis-ci.com/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw04)' -cx README.md
-% ex -sc '2i|[![Build Status](https://travis-ci.org/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw04)' -cx README.md
+cat >> .appveyor.yml <<EOF
+image: Visual Studio 2019
+EOF
+cat >> .appveyor.yml <<EOF
+build_script:
+    - cmd: cmake -H. -B_build
+    - cmd: cmake --build _build
+EOF
+```
+Вставка значков с Build Status для `travis-ci.org`
+```sh
+% ex -sc '1i|[![Build Status](https://travis-ci.org/MrShip15/hw04.svg?branch=master)](https://travis-ci.org/MrShip15/hw04)' -cx README.md
 ```
 ## Links
 
