@@ -1,5 +1,6 @@
 language: cpp
-dist: xenial
+os:
+  - osx
 jobs:
   include:
   - name: "all projects"
