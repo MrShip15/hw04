@@ -1,4 +1,7 @@
 [![Build Status](https://travis-ci.org/MrShip15/hw04.svg?branch=master)](https://travis-ci.org/MrShip15/hw04)
+[![Build status](https://ci.appveyor.com/api/projects/status/wkbl6ku2g573k1v4?svg=true)](https://ci.appveyor.com/project/MrShip15/hw04)
+
+
 ## Homework IV
 
 Вы продолжаете проходить стажировку в "Formatter Inc." (см [подробности](https://github.com/tp-labs/lab03#Homework)).
@@ -110,9 +113,10 @@ build_script:
     - cmd: cmake --build _build
 EOF
 ```
-Вставка значков с Build Status для `travis-ci.org`
+Вставка значков с Build Status для `travis-ci.org` и `appveyor.com`
 ```sh
 % ex -sc '1i|[![Build Status](https://travis-ci.org/MrShip15/hw04.svg?branch=master)](https://travis-ci.org/MrShip15/hw04)' -cx README.md
+% ex -sc '2i|[![Build status](https://ci.appveyor.com/api/projects/status/wkbl6ku2g573k1v4?svg=true)](https://ci.appveyor.com/project/MrShip15/hw04)' -cx README.md
 ```
 ## Links
 
