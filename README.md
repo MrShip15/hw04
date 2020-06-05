@@ -1,308 +1,114 @@
-## Homework IIII
-Представьте, что вы стажер в компании "Formatter Inc.".
-### Задание 1
-Вам поручили перейти на систему автоматизированной сборки **CMake**.
-Исходные файлы находятся в директории [formatter_lib](formatter_lib).
-В этой директории находятся файлы для статической библиотеки *formatter*.
-Создайте `CMakeLists.txt` в директории [formatter_lib](formatter_lib),
-с помощью которого можно будет собирать статическую библиотеку *formatter*.
+[![Build Status](https://travis-ci.com/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw04)
+[![Build Status](https://travis-ci.org/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw04)
+## Homework IV
 
-Создание CMakeLists.txt для автоматизированной сборки библиотеки в каталоге `formatter_lib`
+Вы продолжаете проходить стажировку в "Formatter Inc." (см [подробности](https://github.com/tp-labs/lab03#Homework)).
+
+В прошлый раз ваше задание заключалось в настройке автоматизированной системы **CMake**.
+
+Сейчас вам требуется настроить систему непрерывной интеграции для библиотек и приложений, с которыми вы работали в [прошлый раз](https://github.com/tp-labs/lab03#Homework). Настройте сборочные процедуры на различных платформах:
+* используйте [TravisCI](https://travis-ci.com/) для сборки на операционной системе **MacOS** с использованием компиляторов **gcc** и **clang**;
+
+
+Настройка git-репозитория **hw04** для работы
 ```sh
-% cd formatter_lib
-# Устанавливаем минимальную версию CMake и название проекта
-% cat > CMakeLists.txt <<EOF
+% git clone https://github.com/Evgengrmit/hw03 projects/hw04
+% cd projects/hw04
+% git remote remove origin
+% git remote add origin https://github.com/Evgengrmit/hw04
+```
+Cоздание единого `CMakeLists.txt`, по которому будет осуществляться сборка при помощи **TravisCI**
+```sh
+% cat >> CMakeLists.txt <<EOF
 cmake_minimum_required(VERSION 3.10)
 project(formatter)
-EOF
-```
-Устанавливаем стандарт языка и делаем его обязательным
-```sh
-% cat >> CMakeLists.txt <<EOF
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+add_library(formatter STATIC formatter_lib/formatter.cpp)
+include_directories(formatter_lib)
+
+add_library(formatter_ex STATIC formatter_ex_lib/formatter_ex.cpp)
+include_directories(formatter_ex_lib)
+
+add_executable(hello_world hello_world_application/hello_world.cpp)
+target_link_libraries(hello_world formatter formatter_ex)
+
+add_library(solver_lib STATIC solver_lib/solver.cpp)
+include_directories(solver_lib)
+
+add_executable(solver solver_application/equation.cpp)
+target_link_libraries(solver formatter formatter_ex solver_lib)
 EOF
 ```
-Сборка статической библиотеки с именем *formatter* и исходным файлом `formatter.cpp`
+Создание файла `.travis.yml`
 ```sh
-% cat >> CMakeLists.txt <<EOF
-
-add_library(formatter STATIC \${CMAKE_CURRENT_SOURCE_DIR}/formatter.cpp)
+# Установка языка программирования
+# операционной системы и компиляторов
+% cat > .travis.yml <<EOF
+language: cpp
+os:
+  - osx
 EOF
 ```
-Добавление директории с хэдерами и указание, где искать заголовочные файлы
-``` sh
-% cat >> CMakeLists.txt <<EOF
-
-include_directories(\${CMAKE_CURRENT_SOURCE_DIR})
+Скрипт, который выполняет команды `cmake` для сборки проектов в каждой директории
+```sh
+% cat >> script <<EOF
+cmake formatter_lib/CMakeLists.txt -Bformatter_lib/_build -DCMAKE_CURRENT_SOURCE_DIR=$PWD
+cmake --build formatter_lib/_build
+cmake formatter_ex_lib/CMakeLists.txt -Bformatter_ex_lib/_build -DCMAKE_CURRENT_SOURCE_DIR=$PWD
+cmake --build formatter_ex_lib/_build
+cmake hello_world_application/CMakeLists.txt -Bhello_world_application/_build -DCMAKE_CURRENT_SOURCE_DIR=$PWD
+cmake --build hello_world_application/_build
+cmake solver_application/CMakeLists.txt -Bsolver_application/_build -DCMAKE_CURRENT_SOURCE_DIR=$PWD
+cmake --build solver_application/_build
 EOF
 ```
-Создание директории, которую CMake будет использовать в качестве корневого каталога сборки и указание каталога, где искать исходные файлы для проекта и последующая сборка
+Установка пользовательского сценария запуска с помощью **CMake**
 ```sh
-% cmake -H. -B_build
-...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw03/formatter_lib/_build
-% cmake --build _build
-Scanning dependencies of target formatter
-[ 50%] Building CXX object CMakeFiles/formatter.dir/formatter.cpp.o
-[100%] Linking CXX static library libformatter.a
-[100%] Built target formatter
-```
-Убеждаемся, что статическая библиотека *formatter* действительно создана.
-```sh
-% ls _build/libformatter.a
-_build/libformatter.a
-```
-Первое задание выполнено.
-
-### Задание 2
-У компании "Formatter Inc." есть перспективная библиотека,
-которая является расширением предыдущей библиотеки. Т.к. вы уже овладели
-навыком созданием `CMakeLists.txt` для статической библиотеки *formatter*, ваш
-руководитель поручает заняться созданием `CMakeLists.txt` для библиотеки
-*formatter_ex*, которая в свою очередь использует библиотеку *formatter*.
-
-Создание CMakeLists.txt для автоматизированной сборки библиотеки в каталоге `formatter_ex_lib `
-```sh
-% cd formatter_ex_lib
-# Устанавливаем минимальную версию CMake и название проекта
-% cat > CMakeLists.txt <<EOF
-cmake_minimum_required(VERSION 3.10)
-project(formatter_ex)
+# Установка настроек СMake, запуск и исполнение
+% cat >> .travis.yml <<EOF
+jobs:
+  include:
+  - name: "all projects"
+    script:
+    - cmake -H. -B_build
+    - cmake --build _build
+  - name: "each CMakeLists.txt"
+    script:
+    - source ./script
 EOF
 ```
-Устанавливаем стандарт языка и делаем его обязательным, а так же для удобства изменим переменную `CMAKE_CURRENT_SOURCE_DIR`
+Установка дополнительных исполняемых файлов и пакетов
 ```sh
-% cat >> CMakeLists.txt <<EOF
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CURRENT_SOURCE_DIR /Users/evgengrmit/Evgengrmit/workspace/projects/hw03)
+# Дополнения конфигурирации источников и пакетов
+$ cat >> .travis.yml <<EOF
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake
+      - cmake-data
 EOF
-```
-Сборка статической библиотеки с именем *formatter_ex_lib* и исходным файлом `formatter.cpp`
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-add_library(formatter_ex STATIC \${CMAKE_CURRENT_SOURCE_DIR}/formatter_ex.cpp)
-EOF
-```
-Добавление директории с хэдерами и указание, где искать заголовочные файлы
-``` sh
-% cat >> CMakeLists.txt <<EOF
-
-include_directories(\${CMAKE_CURRENT_SOURCE_DIR})
-EOF
-```
-Указание директории, где находятся хедэры библиотеки *formatter* и компоновка текущей библиотеки с библиотекой *formatter*
-``` sh
-% cat >> CMakeLists.txt <<EOF
-
-include_directories(\${CMAKE_CURRENT_SOURCE_DIR}/formatter_lib)
-target_link_libraries(formatter_ex formatter)
-EOF
-```
-Создание директории, которую CMake будет использовать в качестве корневого каталога сборки и указание каталога, где искать исходные файлы для проекта и последущая сборка
-```sh
-% cmake -H. -B_build
-...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw03/formatter_ex_lib/_build
-% cmake --build _build
-Scanning dependencies of target formatter_ex
-[ 50%] Building CXX object CMakeFiles/formatter_ex.dir/formatter_ex.cpp.o
-[100%] Linking CXX static library libformatter_ex.a
-[100%] Built target formatter_ex
-```
-Убеждаемся, что статическая библиотека *formatter* действительно создана.
-```sh
-% ls _build/libformatter_ex.a
-_build/libformatter_ex.a
-```
-Второе задание выполнено.
-### Задание 3
-Конечно же ваша компания предоставляет примеры использования своих библиотек.
-Чтобы продемонстрировать как работать с библиотекой *formatter_ex*,
-вам необходимо создать два `CMakeLists.txt` для двух простых приложений:
-* *hello_world*, которое использует библиотеку *formatter_ex*;
-Создание CMakeLists.txt для автоматизированной сборки библиотеки в каталоге `formatter_ex_lib `
-```sh
-% cd hello_world_application
-# Устанавливаем минимальную версию CMake и название проекта
-% cat > CMakeLists.txt <<EOF
-cmake_minimum_required(VERSION 3.10)
-project(hello_world)
-EOF
-```
-Устанавливаем стандарт языка и делаем его обязательным, а так же для удобства изменим переменную `CMAKE_CURRENT_SOURCE_DIR`
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CURRENT_SOURCE_DIR /Users/evgengrmit/Evgengrmit/workspace/projects/hw03)
-EOF
-```
-Добавление исполняемого файла в соответствующий проект
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-add_executable(hello_world \${CMAKE_CURRENT_SOURCE_DIR}/hello_world_application/hello_world.cpp)
-EOF
-```
-Указание директорий, где находятся хедэры библиотек *formatter* и *formatter_ex* и поиск библиотек в данных директориях.
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-include_directories(\${CMAKE_CURRENT_SOURCE_DIR}/formatter_lib \${CMAKE_CURRENT_SOURCE_DIR}/formatter_ex_lib)
-
-find_library(formatter NAMES libformatter.a PATHS \${CMAKE_CURRENT_SOURCE_DIR}/formatter_lib)
-find_library(formatter_ex NAMES libformatter_ex.a PATHS \${CMAKE_CURRENT_SOURCE_DIR}/formatter_ex_lib)
-EOF
-```
-Линковка проекта с найденными библиотеками
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-target_link_libraries(hello_world \${formatter} \${formatter_ex})
-EOF
-```
-Сборка проекта с помощью CMake в директории `_build`
-```sh
-# Создание каталога `_build` со сборочными файлами проекта
-% cmake -H. -B_build
-...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw03/hello_world_application/_build
-% cmake --build _build
-Scanning dependencies of target hello_world
-[ 50%] Building CXX object CMakeFiles/hello_world.dir/hello_world.cpp.o
-[100%] Linking CXX executable hello_world
-```
-Запускаем проект
-```sh
-% _build/hello_world &&
--------------------------
-hello, world!
--------------------------
 
 ```
-
-* *solver*, приложение которое испольует статические библиотеки *formatter_ex* и *solver_lib*.
+Проверка `.travis.yml` на ошибки
 ```sh
-% cd solver_application
-# Устанавливаем минимальную версию CMake и название проекта
-% cat > CMakeLists.txt <<EOF
-cmake_minimum_required(VERSION 3.10)
-project(solver)
-EOF
+% travis lint
+Hooray, .travis.yml looks valid :)
 ```
-Устанавливаем стандарт языка и делаем его обязательным, а так же для удобства изменим переменную `CMAKE_CURRENT_SOURCE_DIR`
+Вставка значков с Build Status для `travis-ci.com` и `travis-ci.org`
 ```sh
-% cat >> CMakeLists.txt <<EOF
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CURRENT_SOURCE_DIR /Users/evgengrmit/Evgengrmit/workspace/projects/hw03)
-EOF
+% ex -sc '1i|[![Build Status](https://travis-ci.com/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.com/Evgengrmit/hw04)' -cx README.md
+% ex -sc '2i|[![Build Status](https://travis-ci.org/Evgengrmit/hw04.svg?branch=master)](https://travis-ci.org/Evgengrmit/hw04)' -cx README.md
 ```
-Сборка статической библиотеки с именем *solver_lib* и исходным файлом `solver.cpp`
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-add_library(solver_lib STATIC \${CMAKE_CURRENT_SOURCE_DIR}/solver_lib/solver.cpp)
-EOF
-```
-Добавление директории с хэдерами и указание, где искать заголовочные файлы
-``` sh
-% cat >> CMakeLists.txt <<EOF
-
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/solver_lib ${CMAKE_CURRENT_SOURCE_DIR}/formatter_lib ${CMAKE_CURRENT_SOURCE_DIR}/formatter_ex_lib)
-EOF
-```
-Создание директории, которую CMake будет использовать в качестве корневого каталога сборки и указание каталога, где искать исходные файлы для библиотеки и последующая сборка
-```sh
-% cmake -H. -B_build
-...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw03/solver_application/_build
-% cmake --build _build
-Scanning dependencies of target solver_lib
-[ 50%] Building CXX object CMakeFiles/solver_lib.dir/Users/evgengrmit/Evgengrmit/workspace/projects/hw03/solver_lib/solver.cpp.o
-[100%] Linking CXX static library libsolver_lib.a
-[100%] Built target solver_lib
-```
-Добавление исполняемого файла в соответствующий проект
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-add_executable(solver \${CMAKE_CURRENT_SOURCE_DIR}/solver_application/equation.cpp)
-EOF
-```
-Указание директорий, где находятся хедэры библиотек *formatter* и *formatter_ex* и поиск библиотек в данных директориях.
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-find_library(formatter NAMES libformatter.a PATHS \${CMAKE_CURRENT_SOURCE_DIR}/formatter_lib)
-find_library(formatter_ex NAMES libformatter_ex.a PATHS \${CMAKE_CURRENT_SOURCE_DIR}/formatter_ex_lib)
-find_library(solver_lib NAMES libsolver_lib.a PATHS \${CMAKE_CURRENT_SOURCE_DIR}/solver_lib)
-EOF
-```
-Линковка проекта с найденными библиотеками
-```sh
-% cat >> CMakeLists.txt <<EOF
-
-target_link_libraries(solver \${formatter} \${formatter_ex} \${solver_lib})
-EOF
-```
-Сборка проекта с помощью CMake в директории `_build`
-```sh
-# Создание каталога `_build` со сборочными файлами проекта
-% cmake -H. -B_build
-...
--- Build files have been written to: /Users/evgengrmit/Evgengrmit/workspace/projects/hw03/hello_world_application/_build
-% cmake --build _build
-Scanning dependencies of target hello_world
-[ 50%] Building CXX object CMakeFiles/hello_world.dir/hello_world.cpp.o
-[100%] Linking CXX executable hello_world
-```
-Сборка проекта с помощью CMake в директории `_build`
-```sh
-$ cmake --build _build # Сборка всего проекта
-Scanning dependencies of target solver
-[ 25%] Building CXX object CMakeFiles/solver.dir/equation.cpp.o
-[ 50%] Linking CXX executable solver
-[ 50%] Built target solver
-Scanning dependencies of target solver_lib
-[ 75%] Building CXX object CMakeFiles/solver_lib.dir/Users/evgengrmit/Evgengrmit/workspace/projects/hw03/solver_lib/solver.cpp.o
-[100%] Linking CXX static library libsolver_lib.a
-[100%] Built target solver_lib
-$ cmake --build _build --target solver_lib # Сборка только статической библиотеки
-[100%] Built target solver_lib
-$ cmake --build _build --target solver # Сборка solver
-[100%] Built target solver
-```
-Запускаем проект
-```sh
-% _build/solver && echo
-1 5 6
--------------------------
-x1 = -3.000000
--------------------------
--------------------------
-x2 = -2.000000
--------------------------
-
-```
-Третье задание выполнено.
-
-
-**Удачной стажировки!**
-
 ## Links
-- [Основы сборки проектов на С/C++ при помощи CMake](https://eax.me/cmake/)
-- [CMake Tutorial](http://neerc.ifmo.ru/wiki/index.php?title=CMake_Tutorial)
-- [C++ Tutorial - make & CMake](https://www.bogotobogo.com/cplusplus/make.php)
-- [Autotools](http://www.gnu.org/software/automake/manual/html_node/Autotools-Introduction.html)
-- [CMake](https://cgold.readthedocs.io/en/latest/index.html)
+
+- [Travis Client](https://github.com/travis-ci/travis.rb)
+- [AppVeyour](https://www.appveyor.com/)
+- [GitLab CI](https://about.gitlab.com/gitlab-ci/)
 
 ```
 Copyright (c) 2015-2020 The ISC Authors
